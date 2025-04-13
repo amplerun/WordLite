@@ -404,3 +404,438 @@ function formatText(format) {
                     // Block code
                     const pre = document.createElement('pre');
                     const code = document.createElement('code');
+code.textContent = selection.toString();
+                    pre.appendChild(code);
+                    
+                    // Replace selection with code block
+                    range.deleteContents();
+                    range.insertNode(pre);
+                } else {
+                    // Inline code
+                    const code = document.createElement('code');
+                    code.textContent = selection.toString();
+                    
+                    // Replace selection with code element
+                    range.deleteContents();
+                    range.insertNode(code);
+                }
+            }
+            break;
+    }
+    
+    // Update format button states
+    updateFormatButtonStates();
+    
+    // Update word count
+    updateWordCount();
+    
+    // Schedule autosave
+    scheduleAutoSave();
+}
+
+/**
+ * Get closest parent element matching the tag name
+ */
+function getClosestElement(node, tagName) {
+    while (node) {
+        if (node.nodeType === 1 && node.tagName === tagName) {
+            return node;
+        }
+        node = node.parentNode;
+    }
+    return null;
+}
+
+/**
+ * Handle editor input event
+ */
+function handleEditorInput() {
+    updateWordCount();
+    scheduleAutoSave();
+}
+
+/**
+ * Update the word count in the status bar
+ */
+function updateWordCount() {
+    const text = editor.innerText || '';
+    const count = text.trim() ? text.trim().split(/\s+/).length : 0;
+    wordCount.textContent = `Words: ${count}`;
+}
+
+/**
+ * Handle document title change
+ */
+function handleTitleChange() {
+    wordlite.currentDocument.title = documentTitle.value || 'Untitled Document';
+    scheduleAutoSave();
+}
+
+/**
+ * Schedule auto-save with debounce
+ */
+function scheduleAutoSave() {
+    // Clear any existing timeout
+    if (wordlite.saveTimeout) {
+        clearTimeout(wordlite.saveTimeout);
+    }
+    
+    // Show saving indicator
+    saveStatus.textContent = 'Saving...';
+    saveStatus.classList.add('saving');
+    
+    // Set new timeout
+    wordlite.saveTimeout = setTimeout(() => {
+        saveDocument();
+    }, 5000); // 5 seconds delay
+}
+
+/**
+ * Start auto-save interval
+ */
+function startAutoSave() {
+    // Initial save
+    saveDocument();
+    
+    // Set up interval for backup saves (every 30 seconds)
+    setInterval(() => {
+        if (wordlite.saveTimeout) {
+            // If there's a pending save, do it now
+            clearTimeout(wordlite.saveTimeout);
+            wordlite.saveTimeout = null;
+            saveDocument();
+        }
+    }, 30000);
+}
+
+/**
+ * Save the current document
+ */
+function saveDocument() {
+    // Get current content from editor
+    wordlite.currentDocument.content = editor.innerHTML;
+    wordlite.currentDocument.lastSaved = new Date().toISOString();
+    
+    // Find if this document already exists in our list
+    const index = wordlite.documents.findIndex(doc => doc.id === wordlite.currentDocument.id);
+    
+    if (index !== -1) {
+        // Update existing document
+        wordlite.documents[index] = {...wordlite.currentDocument};
+    } else {
+        // Add new document
+        wordlite.documents.push({...wordlite.currentDocument});
+    }
+    
+    // Save to localStorage
+    saveDocumentsToStorage();
+    
+    // Update UI
+    populateDocumentList();
+    updateSaveStatus();
+}
+
+/**
+ * Update save status indicator
+ */
+function updateSaveStatus() {
+    saveStatus.textContent = 'Saved';
+    saveStatus.classList.remove('saving');
+    
+    if (wordlite.currentDocument.lastSaved) {
+        const date = new Date(wordlite.currentDocument.lastSaved);
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        saveStatus.textContent = `Saved at ${timeStr}`;
+    }
+}
+
+/**
+ * Create a new document
+ */
+function createNewDocument() {
+    // Save the current one first
+    saveDocument();
+    
+    // Create new document
+    wordlite.currentDocument = {
+        id: Date.now().toString(),
+        title: 'Untitled Document',
+        content: '<h1>New Document</h1><p>Start writing here...</p>',
+        lastSaved: null
+    };
+    
+    // Update UI
+    documentTitle.value = wordlite.currentDocument.title;
+    updateEditorContent();
+    updateWordCount();
+    
+    // Focus editor
+    editor.focus();
+}
+
+/**
+ * Update editor with current document content
+ */
+function updateEditorContent() {
+    editor.innerHTML = wordlite.currentDocument.content;
+    documentTitle.value = wordlite.currentDocument.title;
+}
+
+/**
+ * Populate document list in sidebar
+ */
+function populateDocumentList() {
+    documentList.innerHTML = '';
+    
+    // Sort documents by last modified date
+    const sortedDocs = [...wordlite.documents].sort((a, b) => {
+        return new Date(b.lastSaved) - new Date(a.lastSaved);
+    });
+    
+    sortedDocs.forEach(doc => {
+        const item = document.createElement('div');
+        item.className = 'document-item';
+        if (doc.id === wordlite.currentDocument.id) {
+            item.classList.add('active');
+        }
+        
+        // Create title element
+        const title = document.createElement('div');
+        title.className = 'document-title';
+        title.textContent = doc.title;
+        
+        // Create date element if available
+        const date = document.createElement('div');
+        date.className = 'document-date';
+        if (doc.lastSaved) {
+            const lastSaved = new Date(doc.lastSaved);
+            date.textContent = lastSaved.toLocaleDateString();
+        }
+        
+        // Add elements to item
+        item.appendChild(title);
+        item.appendChild(date);
+        
+        // Add click event
+        item.addEventListener('click', () => loadDocument(doc.id));
+        
+        // Add to list
+        documentList.appendChild(item);
+    });
+}
+
+/**
+ * Load a document by ID
+ */
+function loadDocument(id) {
+    // Save current first
+    saveDocument();
+    
+    // Find document
+    const doc = wordlite.documents.find(d => d.id === id);
+    if (!doc) return;
+    
+    // Set as current
+    wordlite.currentDocument = {...doc};
+    
+    // Update UI
+    updateEditorContent();
+    updateWordCount();
+    populateDocumentList();
+    
+    // Close sidebar on mobile
+    if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+    }
+}
+
+/**
+ * Save documents to localStorage
+ */
+function saveDocumentsToStorage() {
+    try {
+        localStorage.setItem('wordlite-documents', JSON.stringify(wordlite.documents));
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+        // If localStorage fails, try using IndexedDB
+        saveToIndexedDB();
+    }
+}
+
+/**
+ * Load documents from localStorage
+ */
+function loadDocumentsFromStorage() {
+    try {
+        const storedDocs = localStorage.getItem('wordlite-documents');
+        if (storedDocs) {
+            wordlite.documents = JSON.parse(storedDocs);
+            
+            // Set current document to most recently saved
+            if (wordlite.documents.length > 0) {
+                const mostRecent = [...wordlite.documents].sort((a, b) => {
+                    return new Date(b.lastSaved) - new Date(a.lastSaved);
+                })[0];
+                
+                wordlite.currentDocument = {...mostRecent};
+            }
+        }
+    } catch (error) {
+        console.error('Error loading from localStorage:', error);
+        // Try loading from IndexedDB
+        loadFromIndexedDB();
+    }
+}
+
+/**
+ * Save to IndexedDB (fallback for large documents)
+ */
+function saveToIndexedDB() {
+    // Basic IndexedDB implementation - expand as needed
+    const request = indexedDB.open('WordLiteDB', 1);
+    
+    request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('documents')) {
+            db.createObjectStore('documents', { keyPath: 'id' });
+        }
+    };
+    
+    request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['documents'], 'readwrite');
+        const store = transaction.objectStore('documents');
+        
+        // Save each document individually
+        wordlite.documents.forEach(doc => {
+            store.put(doc);
+        });
+        
+        transaction.oncomplete = () => {
+            console.log('All documents saved to IndexedDB');
+        };
+    };
+}
+
+/**
+ * Load from IndexedDB
+ */
+function loadFromIndexedDB() {
+    const request = indexedDB.open('WordLiteDB', 1);
+    
+    request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['documents'], 'readonly');
+        const store = transaction.objectStore('documents');
+        const getAllRequest = store.getAll();
+        
+        getAllRequest.onsuccess = () => {
+            if (getAllRequest.result.length > 0) {
+                wordlite.documents = getAllRequest.result;
+                
+                // Set current document to most recently saved
+                const mostRecent = [...wordlite.documents].sort((a, b) => {
+                    return new Date(b.lastSaved) - new Date(a.lastSaved);
+                })[0];
+                
+                wordlite.currentDocument = {...mostRecent};
+                updateEditorContent();
+                updateWordCount();
+                populateDocumentList();
+            }
+        };
+    };
+}
+
+/**
+ * Export as PDF
+ * Note: Would typically use html2pdf.js library
+ */
+function exportAsPDF() {
+    alert('PDF export requires the html2pdf.js library. Please include it or download as WDOC instead.');
+    
+    // Commented code for when html2pdf is available:
+    /*
+    if (typeof html2pdf === 'undefined') {
+        alert('PDF export requires the html2pdf.js library.');
+        return;
+    }
+    
+    const content = document.createElement('div');
+    content.innerHTML = wordlite.currentDocument.content;
+    
+    const options = {
+        margin: 10,
+        filename: `${wordlite.currentDocument.title}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().from(content).set(options).save();
+    */
+}
+
+/**
+ * Export as Markdown
+ * Note: Would typically use Showdown.js library
+ */
+function exportAsMarkdown() {
+    alert('Markdown export requires the Showdown.js library. Please include it or download as WDOC instead.');
+    
+    // Commented code for when Showdown is available:
+    /*
+    if (typeof showdown === 'undefined') {
+        alert('Markdown export requires the Showdown.js library.');
+        return;
+    }
+    
+    const converter = new showdown.Converter();
+    const html = wordlite.currentDocument.content;
+    const markdown = converter.makeMarkdown(html);
+    
+    downloadFile(`${wordlite.currentDocument.title}.md`, markdown);
+    */
+}
+
+/**
+ * Export as WDOC (custom JSON format)
+ */
+function exportAsWDOC() {
+    const wdoc = JSON.stringify({
+        title: wordlite.currentDocument.title,
+        content: wordlite.currentDocument.content,
+        created: wordlite.currentDocument.id,
+        lastModified: new Date().toISOString(),
+        format: 'wdoc-1.0'
+    }, null, 2);
+    
+    downloadFile(`${wordlite.currentDocument.title}.wdoc`, wdoc);
+}
+
+/**
+ * Helper to download a file
+ */
+function downloadFile(filename, text) {
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+/**
+ * Register service worker for offline support
+ */
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registered successfully', reg))
+            .catch(err => console.error('Service Worker registration failed', err));
+    }
+}
+
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', initApp);
