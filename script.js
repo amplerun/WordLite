@@ -86,6 +86,7 @@ function setupEventListeners() {
     document.getElementById('btn-code').addEventListener('click', () => formatText('code'));
     document.getElementById('btn-theme').addEventListener('click', toggleTheme);
     document.getElementById('btn-zen').addEventListener('click', toggleZenMode);
+    document.getElementById('exitZenBtn').addEventListener('click', toggleZenMode);
     document.getElementById('btn-save').addEventListener('click', saveDocument);
     
     // Export options
