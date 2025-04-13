@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordLite - Minimal Editor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+</head>
+<body>
+    <div class="app">
+        <!-- Top Toolbar -->
+        <header class="toolbar">
+            <div class="toolbar-left">
+                <button id="menuToggle" aria-label="Toggle menu">☰</button>
+                <input type="text" id="documentTitle" value="Untitled Document" aria-label="Document title">
+            </div>
+            <div class="toolbar-center">
+                <button id="btn-bold" aria-label="Bold">B</button>
+                <button id="btn-italic" aria-label="Italic"><i>I</i></button>
+                <button id="btn-underline" aria-label="Underline"><u>U</u></button>
+                <button id="btn-heading" aria-label="Heading">H</button>
+                <button id="btn-quote" aria-label="Blockquote">❝</button>
+                <button id="btn-code" aria-label="Code">{}</button>
+            </div>
+            <div class="toolbar-right">
+                <button id="btn-theme" aria-label="Toggle theme">🌓</button>
+                <button id="btn-zen" aria-label="Zen mode">Zen</button>
+                <button id="btn-save" aria-label="Save">💾</button>
+                <div class="dropdown">
+                    <button id="btn-export" aria-label="Export">⤓</button>
+                    <div class="dropdown-content">
+                        <a href="#" id="export-pdf">PDF</a>
+                        <a href="#" id="export-md">Markdown</a>
+                        <a href="#" id="export-wdoc">WDOC</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Documents</h3>
+                <button id="newDoc" aria-label="New document">+</button>
+            </div>
+            <div id="documentList" class="document-list">
+                <!-- Document items will be added here -->
+            </div>
+        </aside>
+
+        <!-- Main Editor Area -->
+        <main class="editor-container">
+            <div id="editor" class="editor" contenteditable="true" spellcheck="true">
+                <h1>Focus on your writing</h1>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor reididunt ut labore et dolore magna aliqua. Ut enim agi minim, veniam, quis nostrud excecitation ullamco laboris nisl ut aliquip ex ea commodo consequat.</p>
+            </div>
+        </main>
+
+        <!-- Floating Format Toolbar -->
+        <div class="format-toolbar" id="formatToolbar">
+            <button data-format="bold" aria-label="Bold">B</button>
+            <button data-format="italic" aria-label="Italic"><i>I</i></button>
+            <button data-format="underline" aria-label="Underline"><u>U</u></button>
+            <button data-format="h1" aria-label="Heading 1">H1</button>
+            <button data-format="h2" aria-label="Heading 2">H2</button>
+            <button data-format="quote" aria-label="Quote">❝</button>
+            <button data-format="code" aria-label="Code">{}</button>
+        </div>
+
+        <!-- Command Palette -->
+        <div id="commandPalette" class="command-palette">
+            <div class="command-input-wrapper">
+                <input type="text" id="commandInput" placeholder="Type a command..." aria-label="Command palette">
+            </div>
+            <div class="command-list" id="commandList">
+                <!-- Commands will populate here -->
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <footer class="statusbar">
+            <div class="status-left">
+                <span id="wordCount">Words: 0</span>
+            </div>
+            <div class="status-right">
+                <span id="saveStatus">Saved</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Import Libraries -->
+    <script src="script.js"></script>
+</body>
+</html>
