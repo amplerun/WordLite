@@ -106,7 +106,23 @@ function setupEventListeners() {
     menuToggle.addEventListener('click', () => {
         sidebar.classList.toggle('open');
     });
-    
+    // Set up font selection event listeners
+document.querySelectorAll('[data-font]').forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const font = e.target.getAttribute('data-font');
+        document.execCommand('fontName', false, font);
+    });
+});
+
+// Set up font size selection event listeners
+document.querySelectorAll('[data-size]').forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const size = e.target.getAttribute('data-size');
+        document.execCommand('fontSize', false, size);
+    });
+});
     // New document button
     document.getElementById('newDoc').addEventListener('click', createNewDocument);
     
@@ -130,7 +146,58 @@ function setupEventListeners() {
     commandInput.addEventListener('input', filterCommands);
     commandInput.addEventListener('keydown', navigateCommandsList);
 }
+// Add event listeners for table functionality
+document.getElementById('btn-table').addEventListener('click', showTableDialog);
+document.getElementById('insertTableCancel').addEventListener('click', hideTableDialog);
+document.getElementById('insertTableConfirm').addEventListener('click', insertTable);
 
+// Show table dialog
+function showTableDialog() {
+    document.getElementById('tableDialog').style.display = 'flex';
+}
+
+// Hide table dialog
+function hideTableDialog() {
+    document.getElementById('tableDialog').style.display = 'none';
+}
+
+// Insert table into editor
+function insertTable() {
+    const rows = parseInt(document.getElementById('tableRows').value);
+    const cols = parseInt(document.getElementById('tableCols').value);
+    
+    if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) {
+        alert('Please enter valid numbers for rows and columns');
+        return;
+    }
+    
+    // Create table HTML
+    let tableHtml = '<table border="1" style="border-collapse: collapse; width: 100%;">';
+    
+    // Add header row
+    tableHtml += '<thead><tr>';
+    for (let i = 0; i < cols; i++) {
+        tableHtml += '<th style="border: 1px solid #ccc; padding: 8px;">Header ' + (i+1) + '</th>';
+    }
+    tableHtml += '</tr></thead>';
+    
+    // Add body rows
+    tableHtml += '<tbody>';
+    for (let i = 0; i < rows - 1; i++) {
+        tableHtml += '<tr>';
+        for (let j = 0; j < cols; j++) {
+            tableHtml += '<td style="border: 1px solid #ccc; padding: 8px;">Cell ' + (i+1) + '-' + (j+1) + '</td>';
+        }
+        tableHtml += '</tr>';
+    }
+    tableHtml += '</tbody></table><p></p>';
+    
+    // Insert at cursor position
+    document.execCommand('insertHTML', false, tableHtml);
+    
+    // Hide dialog
+    hideTableDialog();
+}
 /**
  * Handle keyboard shortcuts
  */
