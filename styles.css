@@ -120,6 +120,27 @@ html, body {
     padding: 2rem;
 }
 
+.exit-zen-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    display: none;
+    z-index: 1000;
+}
+
+.app.zen-mode .exit-zen-btn {
+    display: block;
+}
+
 /* Toolbar Styles */
 .toolbar {
     grid-area: toolbar;
