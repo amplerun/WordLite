@@ -124,6 +124,88 @@ document.querySelectorAll('[data-size]').forEach(item => {
         document.execCommand('fontSize', false, size);
     });
 });
+
+document.getElementById('btn-paste').addEventListener('click', handlePaste);
+
+function handlePaste() {
+    // Focus editor
+    editor.focus();
+    
+    // Use execCommand for paste
+    if (document.execCommand('paste')) {
+        // Success using execCommand
+        return;
+    }
+    
+    // Fallback using Clipboard API
+    try {
+        navigator.clipboard.readText().then(text => {
+            // Insert at cursor position
+            document.execCommand('insertText', false, text);
+        });
+    } catch (err) {
+        console.error('Failed to read clipboard:', err);
+        alert('Please use Ctrl+V to paste content');
+    }
+}
+
+// Add event listener for import button
+document.getElementById('importDoc').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+});
+
+// Add event listener for file input change
+document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const fileName = file.name;
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    
+    if (fileExtension === 'wdoc') {
+        // Handle WDOC files
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const wdoc = JSON.parse(e.target.result);
+                
+                // Create new document
+                wordlite.currentDocument = {
+                    id: Date.now().toString(),
+                    title: wdoc.title || 'Imported Document',
+                    content: wdoc.content || '',
+                    lastSaved: null
+                };
+                
+                // Update UI
+                updateEditorContent();
+                updateWordCount();
+                saveDocument();
+                
+            } catch (error) {
+                console.error('Error parsing WDOC file:', error);
+                alert('Invalid WDOC file format');
+            }
+        };
+        reader.readAsText(file);
+    } else if (fileExtension === 'docx' || fileExtension === 'doc') {
+        // For DOCX files, we'd need mammoth.js library
+        // This is a simplified placeholder
+        alert('To import Word files (.docx), please add the mammoth.js library.\n\nBasic steps to add support:\n1. Add mammoth.js to lib folder\n2. Use it to convert docx to HTML');
+        
+        // Guide users what to do
+        console.log('To implement Word import:');
+        console.log('1. Add mammoth.js: npm install mammoth');
+        console.log('2. Use mammoth.extractRawText() to convert docx to text');
+        console.log('3. Insert the text into the editor');
+    }
+    
+    // Reset file input
+    event.target.value = '';
+}
+    
     // New document button
     document.getElementById('newDoc').addEventListener('click', createNewDocument);
     
