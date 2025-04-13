@@ -90,6 +90,7 @@ function setupEventListeners() {
     
     // Export options
     document.getElementById('export-pdf').addEventListener('click', exportAsPDF);
+    document.getElementById('export-docx').addEventListener('click', exportAsDocx);
     document.getElementById('export-md').addEventListener('click', exportAsMarkdown);
     document.getElementById('export-wdoc').addEventListener('click', exportAsWDOC);
     
@@ -775,7 +776,29 @@ function exportAsPDF() {
     html2pdf().from(content).set(options).save();
     */
 }
-
+function exportAsDocx() {
+    // Access docx library from window.docx
+    const { Document, Paragraph, TextRun, Packer } = window.docx;
+    
+    // Create new document
+    const doc = new Document();
+    
+    // Simple conversion of HTML to paragraphs
+    // This is basic - more complex conversion would require parsing HTML
+    const content = editor.innerText;
+    const paragraphs = content.split('\n').filter(p => p.trim() !== '');
+    
+    paragraphs.forEach(p => {
+        doc.addParagraph(new Paragraph({
+            children: [new TextRun(p)]
+        }));
+    });
+    
+    // Generate and download
+    Packer.toBlob(doc).then(blob => {
+        saveAs(blob, `${wordlite.currentDocument.title}.docx`);
+    });
+}
 /**
  * Export as Markdown
  * Note: Would typically use Showdown.js library
